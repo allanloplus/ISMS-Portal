@@ -1,5 +1,6 @@
 {
   "name": "ISMS Portal Consultant",
   "description": "A comprehensive ISMS operation portal managing governance, risk, compliance, and asset forms with AI-generated templates and examples.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": []
 }

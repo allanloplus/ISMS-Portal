@@ -1,11 +1,19 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedContent } from "../types";
 
-const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let genAIClient: GoogleGenAI | null = null;
+const getGenAI = () => {
+  if (!genAIClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === "undefined") {
+      throw new Error("未設定 Gemini API 金鑰 (API Key is missing)。");
+    }
+    genAIClient = new GoogleGenAI({ apiKey });
+  }
+  return genAIClient;
+};
 
 export const generateFormContent = async (formName: string, category: string): Promise<GeneratedContent> => {
-  const model = "gemini-3-flash-preview";
-
   const prompt = `
     You are an expert ISO 27001 ISMS Consultant.
     I need you to design a specific ISMS document/form.
@@ -24,8 +32,8 @@ export const generateFormContent = async (formName: string, category: string): P
   `;
 
   try {
-    const response = await genAI.models.generateContent({
-      model: model,
+    const response = await getGenAI().models.generateContent({
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -42,7 +50,10 @@ export const generateFormContent = async (formName: string, category: string): P
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response from Gemini");
+    if (!text) {
+      console.warn("Gemini response lacked text. Candidates:", response.candidates);
+      throw new Error(`No response from Gemini. Finish reason: ${response.candidates?.[0]?.finishReason}`);
+    }
 
     return JSON.parse(text) as GeneratedContent;
   } catch (error) {
